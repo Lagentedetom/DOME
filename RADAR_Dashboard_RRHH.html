@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-ESTESIA RADAR | Dashboard RRHH</title>
+<style>
+  :root {
+    --primary: #1B4F72; --secondary: #2E86C1; --accent: #117A65;
+    --text: #2C3E50; --gray: #7F8C8D; --bg: #F0F3F5; --white: #FFF;
+    --risk-low: #27AE60; --risk-mod: #F39C12; --risk-high: #E74C3C;
+    --card-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); }
+
+  /* SIDEBAR */
+  .sidebar { position:fixed; top:0; left:0; width:240px; height:100vh; background:var(--primary); color:white; padding:20px 0; z-index:10; overflow-y:auto; }
+  .sidebar .logo { text-align:center; padding:16px 20px 24px; border-bottom:1px solid rgba(255,255,255,0.15); }
+  .sidebar .logo h2 { font-size:1.3rem; letter-spacing:2px; }
+  .sidebar .logo .sub { font-size:0.7rem; opacity:0.6; margin-top:2px; }
+  .sidebar nav { padding:16px 0; }
+  .sidebar nav a { display:flex; align-items:center; padding:10px 24px; color:rgba(255,255,255,0.75); text-decoration:none; font-size:0.88rem; transition:all 0.2s; gap:10px; }
+  .sidebar nav a:hover, .sidebar nav a.active { background:rgba(255,255,255,0.1); color:white; }
+  .sidebar nav a .icon { width:20px; text-align:center; }
+  .sidebar .company-selector { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.15); margin-top:auto; }
+  .sidebar .company-selector label { font-size:0.75rem; opacity:0.6; display:block; margin-bottom:6px; }
+  .sidebar .company-selector select { width:100%; padding:8px; border-radius:6px; border:none; font-size:0.85rem; background:rgba(255,255,255,0.15); color:white; }
+  .sidebar .company-selector select option { color:var(--text); background:white; }
+
+  /* MAIN */
+  .main { margin-left:240px; padding:24px 32px; min-height:100vh; }
+
+  /* TOP BAR */
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+  .topbar h1 { font-size:1.5rem; color:var(--primary); }
+  .topbar .meta { font-size:0.85rem; color:var(--gray); }
+  .topbar .badge { display:inline-block; padding:4px 12px; border-radius:12px; font-size:0.78rem; font-weight:600; margin-left:10px; }
+  .badge-active { background:#D5F5E3; color:#1E8449; }
+
+  /* KPI CARDS */
+  .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .kpi-card { background:var(--white); border-radius:12px; padding:20px; box-shadow:var(--card-shadow); }
+  .kpi-card .kpi-label { font-size:0.78rem; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .kpi-card .kpi-value { font-size:1.8rem; font-weight:700; color:var(--primary); }
+  .kpi-card .kpi-sub { font-size:0.8rem; color:var(--gray); margin-top:4px; }
+  .kpi-card .kpi-trend { font-size:0.82rem; margin-top:4px; }
+  .trend-up { color:var(--risk-high); }
+  .trend-down { color:var(--risk-low); }
+
+  /* SECTION */
+  .section-title { font-size:1.1rem; color:var(--primary); font-weight:600; margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--secondary); }
+
+  /* CARDS */
+  .card { background:var(--white); border-radius:12px; padding:24px; box-shadow:var(--card-shadow); margin-bottom:24px; }
+  .card h3 { font-size:1rem; color:var(--secondary); margin-bottom:16px; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; margin-bottom:24px; }
+
+  /* RISK DISTRIBUTION BARS */
+  .risk-dist { margin-bottom:16px; }
+  .risk-dist .label { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px; }
+  .risk-dist .bar { height:28px; background:#EEE; border-radius:6px; overflow:hidden; display:flex; }
+  .risk-dist .bar div { height:100%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:600; color:white; transition:width 0.8s; }
+  .bar-low { background:var(--risk-low); }
+  .bar-mod { background:var(--risk-mod); }
+  .bar-high { background:var(--risk-high); }
+
+  /* HEATMAP */
+  .heatmap-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .heatmap-table th { padding:10px 8px; text-align:left; color:var(--gray); font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid #EEE; }
+  .heatmap-table td { padding:10px 8px; border-bottom:1px solid #F0F0F0; }
+  .heatmap-table td.score { text-align:center; font-weight:700; border-radius:6px; }
+  .heat-low { background:#D5F5E3; color:#1E8449; }
+  .heat-mod { background:#FDEBD0; color:#D4790E; }
+  .heat-high { background:#FADBD8; color:#C0392B; }
+  .heatmap-table .dept-name { font-weight:500; }
+  .heatmap-table .n-count { color:var(--gray); font-size:0.8rem; }
+
+  /* DONUT CHART (CSS) */
+  .donut-container { display:flex; align-items:center; gap:24px; }
+  .donut { width:140px; height:140px; border-radius:50%; position:relative; }
+  .donut-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+  .donut-center .val { font-size:1.6rem; font-weight:700; color:var(--primary); }
+  .donut-center .lbl { font-size:0.72rem; color:var(--gray); }
+  .donut-legend { font-size:0.85rem; }
+  .donut-legend div { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .donut-legend .dot { width:12px; height:12px; border-radius:50%; }
+
+  /* BAR CHART SIMPLE */
+  .bar-chart { display:flex; align-items:flex-end; gap:12px; height:180px; padding-top:10px; }
+  .bar-col { display:flex; flex-direction:column; align-items:center; flex:1; }
+  .bar-col .bar-inner { width:100%; border-radius:6px 6px 0 0; transition:height 0.8s; min-height:2px; }
+  .bar-col .bar-label { font-size:0.7rem; color:var(--gray); margin-top:6px; text-align:center; word-break:break-word; }
+  .bar-col .bar-value { font-size:0.75rem; font-weight:600; color:var(--text); margin-bottom:4px; }
+
+  /* TOP RISKS TABLE */
+  .risk-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .risk-table th { padding:10px; text-align:left; background:var(--bg); color:var(--gray); font-size:0.78rem; text-transform:uppercase; }
+  .risk-table td { padding:10px; border-bottom:1px solid #F0F0F0; }
+  .risk-badge { display:inline-block; padding:3px 10px; border-radius:8px; font-size:0.75rem; font-weight:600; }
+
+  /* ACTION ITEMS */
+  .action-item { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #F0F0F0; align-items:flex-start; }
+  .action-item:last-child { border-bottom:none; }
+  .action-priority { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .action-item .action-text { font-size:0.88rem; }
+  .action-item .action-tag { font-size:0.72rem; color:var(--gray); margin-top:2px; }
+
+  /* PRINT */
+  .print-btn { background:var(--secondary); color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-size:0.85rem; }
+  .print-btn:hover { background:var(--primary); }
+
+  /* RESPONSIVE */
+  @media (max-width:1100px) { .kpi-row { grid-template-columns:repeat(2,1fr); } .grid-2,.grid-3 { grid-template-columns:1fr; } }
+  @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:16px; } }
+  @media print { .sidebar { display:none; } .main { margin-left:0; } .print-btn { display:none; } }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <h2>E&middot;ESTESIA</h2>
+    <div class="sub">Dashboard RRHH</div>
+  </div>
+  <nav>
+    <a href="#" class="active"><span class="icon">&#9632;</span> Panel general</a>
+    <a href="#risk-section"><span class="icon">&#9650;</span> Mapa de riesgo</a>
+    <a href="#dept-section"><span class="icon">&#9644;</span> Por departamento</a>
+    <a href="#actions-section"><span class="icon">&#10003;</span> Plan de acci&oacute;n</a>
+  </nav>
+  <div class="company-selector">
+    <label>EMPRESA PILOTO</label>
+    <select id="companySelect" onchange="switchCompany(this.value)">
+      <option value="seat">SEAT &mdash; Martorell</option>
+      <option value="ics">ICS &mdash; Atenci&oacute;n Primaria</option>
+    </select>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="companyTitle">SEAT &mdash; F&aacute;brica de Martorell</h1>
+      <div class="meta" id="evalMeta">Evaluaci&oacute;n RADAR &mdash; Marzo 2026 <span class="badge badge-active">Piloto activo</span></div>
+    </div>
+    <button class="print-btn" onclick="window.print()">&#128424; Imprimir informe</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi-card">
+      <div class="kpi-label">Participaci&oacute;n</div>
+      <div class="kpi-value" id="kpi-part">78%</div>
+      <div class="kpi-sub" id="kpi-part-sub">389 de 500 empleados</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Riesgo alto</div>
+      <div class="kpi-value" id="kpi-high" style="color:var(--risk-high)">18%</div>
+      <div class="kpi-sub" id="kpi-high-sub">70 empleados</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Puntuaci&oacute;n media global</div>
+      <div class="kpi-value" id="kpi-avg">47%</div>
+      <div class="kpi-sub">Escala de malestar (0-100)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Dimensi&oacute;n m&aacute;s cr&iacute;tica</div>
+      <div class="kpi-value" id="kpi-crit" style="font-size:1.2rem;">Agotamiento</div>
+      <div class="kpi-sub" id="kpi-crit-sub">52% media en esta dimensi&oacute;n</div>
+    </div>
+  </div>
+
+  <!-- RISK DISTRIBUTION -->
+  <div id="risk-section">
+    <div class="section-title">Distribuci&oacute;n de riesgo por dimensi&oacute;n</div>
+    <div class="grid-3" id="riskGrid">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- DEPARTMENT HEATMAP -->
+  <div id="dept-section">
+    <div class="section-title">Mapa de calor por departamento</div>
+    <div class="card">
+      <h3>Nivel de malestar por departamento y dimensi&oacute;n</h3>
+      <p style="font-size:0.82rem;color:var(--gray);margin-bottom:16px;">Los valores representan el porcentaje medio de malestar (0%=sin malestar, 100%=m&aacute;ximo malestar). Los colores indican el nivel de riesgo: <span style="color:var(--risk-low);font-weight:600;">verde</span>=bajo, <span style="color:var(--risk-mod);font-weight:600;">naranja</span>=moderado, <span style="color:var(--risk-high);font-weight:600;">rojo</span>=alto.</p>
+      <table class="heatmap-table" id="heatmapTable">
+        <!-- Filled by JS -->
+      </table>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="grid-2">
+    <div class="card">
+      <h3>Distribuci&oacute;n global de riesgo</h3>
+      <div class="donut-container" id="donutContainer">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+    <div class="card">
+      <h3>Malestar medio por departamento</h3>
+      <div class="bar-chart" id="barChart">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP RISK PROFILES -->
+  <div class="card">
+    <h3>Perfiles de mayor riesgo</h3>
+    <p style="font-size:0.82rem;color:var(--gray);margin-bottom:14px;">Segmentos con mayor concentraci&oacute;n de riesgo alto (datos agregados, nunca individuales).</p>
+    <table class="risk-table" id="riskTable">
+      <!-- Filled by JS -->
+    </table>
+  </div>
+
+  <!-- ACTION PLAN -->
+  <div id="actions-section">
+    <div class="section-title">Plan de acci&oacute;n recomendado</div>
+    <div class="card">
+      <h3>Intervenciones prioritarias basadas en los resultados RADAR</h3>
+      <div id="actionItems">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:30px;color:var(--gray);font-size:0.8rem;">
+    E-ESTESIA RADAR &mdash; Informe confidencial &mdash; Datos agregados y anonimizados<br>
+    Equipo cient&iacute;fico: Dra. Susana Jim&eacute;nez-Murcia &middot; Dr. Fernando Fern&aacute;ndez-Aranda &middot; Dom&egrave;nec Huguet
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DEMO DATA
+// ============================================================
+const DATA = {
+  seat: {
+    title: "SEAT \u2014 F\u00e1brica de Martorell",
+    total: 500, responded: 389, date: "Marzo 2026",
+    departments: [
+      { name: "Producci\u00f3n L\u00ednea 1", n: 85, stress: 58, burnout: 62, emotional: 45 },
+      { name: "Producci\u00f3n L\u00ednea 2", n: 72, stress: 55, burnout: 59, emotional: 42 },
+      { name: "Log\u00edstica", n: 48, stress: 42, burnout: 47, emotional: 38 },
+      { name: "Ingenier\u00eda", n: 63, stress: 44, burnout: 40, emotional: 32 },
+      { name: "Calidad", n: 35, stress: 48, burnout: 51, emotional: 40 },
+      { name: "Oficinas/Admin", n: 52, stress: 35, burnout: 33, emotional: 28 },
+      { name: "RRHH", n: 18, stress: 30, burnout: 28, emotional: 25 },
+      { name: "Comercial", n: 16, stress: 38, burnout: 35, emotional: 30 },
+    ],
+    riskProfiles: [
+      { segment: "Turnos nocturnos (Producci\u00f3n)", n: 42, riskHigh: 38, dim: "Agotamiento emocional" },
+      { segment: "Antig\u00fcedad > 10 a\u00f1os (L\u00ednea 1)", n: 28, riskHigh: 32, dim: "Estr\u00e9s percibido" },
+      { segment: "Mandos intermedios (Producci\u00f3n)", n: 15, riskHigh: 27, dim: "Regulaci\u00f3n emocional" },
+      { segment: "Turnos rotativos (Log\u00edstica)", n: 22, riskHigh: 23, dim: "Agotamiento emocional" },
+      { segment: "Nuevas incorporaciones < 1 a\u00f1o", n: 19, riskHigh: 21, dim: "Estr\u00e9s percibido" },
+    ],
+    actions: [
+      { priority: "high", text: "Workshop urgente BOOST sobre gesti\u00f3n del burnout para equipos de Producci\u00f3n L\u00ednea 1 y 2", tag: "Intervenci\u00f3n inmediata \u2014 Semana 1-2" },
+      { priority: "high", text: "Formaci\u00f3n espec\u00edfica para mandos intermedios de Producci\u00f3n: detecci\u00f3n temprana y conversaciones sobre salud mental", tag: "M\u00f3dulo BOOST Managers \u2014 Semana 2-3" },
+      { priority: "mod", text: "Programa de micro-herramientas de regulaci\u00f3n emocional para turnos nocturnos (contenido adaptado a pausas de turno)", tag: "BOOST Micro-tools \u2014 Mes 2" },
+      { priority: "mod", text: "Revisi\u00f3n de carga y ritmos de trabajo en L\u00ednea 1 con responsables de planta", tag: "Consultor\u00eda organizacional \u2014 Mes 2-3" },
+      { priority: "low", text: "Campa\u00f1a de sensibilizaci\u00f3n sobre salud mental en toda la f\u00e1brica (cartelera, intranet, comunicaciones)", tag: "Comunicaci\u00f3n interna \u2014 Mes 1-6" },
+      { priority: "low", text: "Evaluaci\u00f3n RADAR de seguimiento programada para el Mes 5", tag: "Seguimiento \u2014 Agosto 2026" },
+    ]
+  },
+  ics: {
+    title: "ICS \u2014 Atenci\u00f3n Primaria Catalu\u00f1a",
+    total: 300, responded: 248, date: "Marzo 2026",
+    departments: [
+      { name: "Medicina Familiar", n: 52, stress: 65, burnout: 72, emotional: 55 },
+      { name: "Enfermer\u00eda AP", n: 68, stress: 62, burnout: 68, emotional: 52 },
+      { name: "Pediatr\u00eda", n: 24, stress: 55, burnout: 58, emotional: 42 },
+      { name: "Administrativos", n: 38, stress: 48, burnout: 42, emotional: 35 },
+      { name: "Trabajo Social", n: 18, stress: 58, burnout: 60, emotional: 48 },
+      { name: "Salud Mental AP", n: 22, stress: 60, burnout: 65, emotional: 50 },
+      { name: "Gesti\u00f3n/Direcci\u00f3n", n: 14, stress: 50, burnout: 45, emotional: 38 },
+      { name: "Urgencias AP", n: 12, stress: 70, burnout: 75, emotional: 58 },
+    ],
+    riskProfiles: [
+      { segment: "Urgencias AP (todos los turnos)", n: 12, riskHigh: 58, dim: "Agotamiento emocional" },
+      { segment: "Medicina Familiar (> 35 pac./d\u00eda)", n: 28, riskHigh: 46, dim: "Agotamiento emocional" },
+      { segment: "Enfermer\u00eda con turno rotativo", n: 32, riskHigh: 38, dim: "Estr\u00e9s percibido" },
+      { segment: "Salud Mental AP", n: 22, riskHigh: 36, dim: "Regulaci\u00f3n emocional" },
+      { segment: "Profesionales > 15 a\u00f1os antig\u00fcedad", n: 45, riskHigh: 31, dim: "Agotamiento emocional" },
+    ],
+    actions: [
+      { priority: "high", text: "Intervenci\u00f3n BOOST urgente en equipo de Urgencias AP: t\u00e9cnicas de recuperaci\u00f3n r\u00e1pida y gesti\u00f3n de la fatiga por compasi\u00f3n", tag: "Intervenci\u00f3n inmediata \u2014 Semana 1-2" },
+      { priority: "high", text: "Workshop especializado para Medicina Familiar: manejo del burnout con alta carga asistencial", tag: "M\u00f3dulo BOOST \u2014 Semana 2-3" },
+      { priority: "high", text: "Formaci\u00f3n para coordinadores de equipo: c\u00f3mo sostener a profesionales en riesgo sin quemarse ellos mismos", tag: "BOOST Managers \u2014 Semana 3-4" },
+      { priority: "mod", text: "Programa de micro-herramientas adaptado a consultas m\u00e9dicas (ejercicios de 2-3 min entre pacientes)", tag: "BOOST Micro-tools \u2014 Mes 2" },
+      { priority: "mod", text: "Propuesta a Direcci\u00f3n sobre redistribuci\u00f3n de carga asistencial en centros con mayor riesgo", tag: "Consultor\u00eda organizacional \u2014 Mes 2-3" },
+      { priority: "low", text: "Grupo de apoyo entre pares para profesionales de Salud Mental AP", tag: "BOOST Grupal \u2014 Mes 3-6" },
+    ]
+  }
+};
+
+// ============================================================
+// RENDERING
+// ============================================================
+let currentCompany = 'seat';
+
+function switchCompany(key) {
+  currentCompany = key;
+  renderAll();
+}
+
+function riskClass(v) { return v <= 33 ? 'heat-low' : v <= 66 ? 'heat-mod' : 'heat-high'; }
+function riskLabel(v) { return v <= 33 ? 'Bajo' : v <= 66 ? 'Moderado' : 'Alto'; }
+
+function renderAll() {
+  const d = DATA[currentCompany];
+  const partPct = Math.round((d.responded / d.total) * 100);
+
+  document.getElementById('companyTitle').textContent = d.title;
+  document.getElementById('evalMeta').innerHTML = `Evaluaci\u00f3n RADAR \u2014 ${d.date} <span class="badge badge-active">Piloto activo</span>`;
+
+  // Calculate aggregates
+  let totalStress=0, totalBurnout=0, totalEmotional=0, totalN=0;
+  let lowCount=0, modCount=0, highCount=0;
+  d.departments.forEach(dep => {
+    totalStress += dep.stress * dep.n;
+    totalBurnout += dep.burnout * dep.n;
+    totalEmotional += dep.emotional * dep.n;
+    totalN += dep.n;
+    const avg = (dep.stress + dep.burnout + dep.emotional) / 3;
+    if (avg <= 33) lowCount += dep.n;
+    else if (avg <= 66) modCount += dep.n;
+    else highCount += dep.n;
+  });
+  const avgStress = Math.round(totalStress/totalN);
+  const avgBurnout = Math.round(totalBurnout/totalN);
+  const avgEmotional = Math.round(totalEmotional/totalN);
+  const avgGlobal = Math.round((avgStress + avgBurnout + avgEmotional) / 3);
+  const highPct = Math.round((highCount/totalN)*100);
+
+  const dims = [{name:"Estr\u00e9s",val:avgStress},{name:"Agotamiento",val:avgBurnout},{name:"Reg. Emocional",val:avgEmotional}];
+  const critDim = dims.reduce((a,b) => a.val > b.val ? a : b);
+
+  // KPIs
+  document.getElementById('kpi-part').textContent = partPct + '%';
+  document.getElementById('kpi-part-sub').textContent = `${d.responded} de ${d.total} empleados`;
+  document.getElementById('kpi-high').textContent = highPct + '%';
+  document.getElementById('kpi-high-sub').textContent = `${highCount} empleados`;
+  document.getElementById('kpi-avg').textContent = avgGlobal + '%';
+  document.getElementById('kpi-crit').textContent = critDim.name;
+  document.getElementById('kpi-crit-sub').textContent = `${critDim.val}% media en esta dimensi\u00f3n`;
+
+  // Risk distribution per dimension
+  let riskGridHtml = '';
+  const dimData = [
+    {name:"Estr\u00e9s percibido", avg:avgStress, color:"var(--secondary)"},
+    {name:"Agotamiento emocional", avg:avgBurnout, color:"#E67E22"},
+    {name:"Regulaci\u00f3n emocional", avg:avgEmotional, color:"var(--accent)"},
+  ];
+  dimData.forEach(dim => {
+    // Simulate distribution from avg
+    const low = dim.avg <= 33 ? 60 : dim.avg <= 50 ? 40 : 25;
+    const high = dim.avg >= 66 ? 35 : dim.avg >= 50 ? 20 : 10;
+    const mod = 100 - low - high;
+    riskGridHtml += `<div class="card">
+      <h3 style="color:${dim.color}">${dim.name}</h3>
+      <div style="text-align:center;margin-bottom:12px;">
+        <span style="font-size:2rem;font-weight:700;color:${dim.color}">${dim.avg}%</span>
+        <span style="font-size:0.85rem;color:var(--gray);display:block;">media de malestar</span>
+      </div>
+      <div class="risk-dist">
+        <div class="bar">
+          <div class="bar-low" style="width:${low}%">${low}%</div>
+          <div class="bar-mod" style="width:${mod}%">${mod}%</div>
+          <div class="bar-high" style="width:${high}%">${high}%</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--gray);margin-top:4px;">
+          <span>Bajo</span><span>Moderado</span><span>Alto</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('riskGrid').innerHTML = riskGridHtml;
+
+  // Heatmap table
+  let hmHtml = `<tr><th>Departamento</th><th>N</th><th>Estr\u00e9s</th><th>Agotamiento</th><th>Reg. Emocional</th><th>Media</th><th>Riesgo</th></tr>`;
+  const sorted = [...d.departments].sort((a,b) => {
+    const avgA = (a.stress+a.burnout+a.emotional)/3;
+    const avgB = (b.stress+b.burnout+b.emotional)/3;
+    return avgB - avgA;
+  });
+  sorted.forEach(dep => {
+    const avg = Math.round((dep.stress+dep.burnout+dep.emotional)/3);
+    hmHtml += `<tr>
+      <td class="dept-name">${dep.name}</td>
+      <td class="n-count">${dep.n}</td>
+      <td class="score ${riskClass(dep.stress)}">${dep.stress}%</td>
+      <td class="score ${riskClass(dep.burnout)}">${dep.burnout}%</td>
+      <td class="score ${riskClass(dep.emotional)}">${dep.emotional}%</td>
+      <td class="score ${riskClass(avg)}">${avg}%</td>
+      <td><span class="risk-badge" style="background:${avg<=33?'#D5F5E3':avg<=66?'#FDEBD0':'#FADBD8'};color:${avg<=33?'#1E8449':avg<=66?'#D4790E':'#C0392B'}">${riskLabel(avg)}</span></td>
+    </tr>`;
+  });
+  document.getElementById('heatmapTable').innerHTML = hmHtml;
+
+  // Donut chart
+  const lowPct = Math.round((lowCount/totalN)*100);
+  const modPct = Math.round((modCount/totalN)*100);
+  const highPct2 = 100 - lowPct - modPct;
+  const donutGrad = `conic-gradient(var(--risk-low) 0% ${lowPct}%, var(--risk-mod) ${lowPct}% ${lowPct+modPct}%, var(--risk-high) ${lowPct+modPct}% 100%)`;
+  document.getElementById('donutContainer').innerHTML = `
+    <div class="donut" style="background:${donutGrad}">
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90px;height:90px;border-radius:50%;background:white;"></div>
+      <div class="donut-center"><div class="val">${d.responded}</div><div class="lbl">respuestas</div></div>
+    </div>
+    <div class="donut-legend">
+      <div><div class="dot" style="background:var(--risk-low)"></div> Riesgo bajo: ${lowPct}% (${lowCount})</div>
+      <div><div class="dot" style="background:var(--risk-mod)"></div> Riesgo moderado: ${modPct}% (${modCount})</div>
+      <div><div class="dot" style="background:var(--risk-high)"></div> Riesgo alto: ${highPct2}% (${highCount})</div>
+    </div>`;
+
+  // Bar chart
+  const maxAvg = Math.max(...d.departments.map(dep => (dep.stress+dep.burnout+dep.emotional)/3));
+  let barHtml = '';
+  sorted.forEach(dep => {
+    const avg = Math.round((dep.stress+dep.burnout+dep.emotional)/3);
+    const h = Math.round((avg / maxAvg) * 160);
+    const color = avg <= 33 ? 'var(--risk-low)' : avg <= 66 ? 'var(--risk-mod)' : 'var(--risk-high)';
+    barHtml += `<div class="bar-col">
+      <div class="bar-value">${avg}%</div>
+      <div class="bar-inner" style="height:${h}px;background:${color}"></div>
+      <div class="bar-label">${dep.name.length > 12 ? dep.name.substring(0,12)+'.' : dep.name}</div>
+    </div>`;
+  });
+  document.getElementById('barChart').innerHTML = barHtml;
+
+  // Risk profiles table
+  let rpHtml = `<tr><th>Segmento</th><th>N</th><th>% Riesgo alto</th><th>Dimensi\u00f3n cr\u00edtica</th></tr>`;
+  d.riskProfiles.forEach(rp => {
+    rpHtml += `<tr>
+      <td>${rp.segment}</td>
+      <td>${rp.n}</td>
+      <td><span class="risk-badge" style="background:#FADBD8;color:#C0392B">${rp.riskHigh}%</span></td>
+      <td>${rp.dim}</td>
+    </tr>`;
+  });
+  document.getElementById('riskTable').innerHTML = rpHtml;
+
+  // Action items
+  let actHtml = '';
+  d.actions.forEach(a => {
+    const color = a.priority === 'high' ? 'var(--risk-high)' : a.priority === 'mod' ? 'var(--risk-mod)' : 'var(--risk-low)';
+    actHtml += `<div class="action-item">
+      <div class="action-priority" style="background:${color}"></div>
+      <div>
+        <div class="action-text">${a.text}</div>
+        <div class="action-tag">${a.tag}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('actionItems').innerHTML = actHtml;
+}
+
+renderAll();
+</script>
+</body>
+</html>
